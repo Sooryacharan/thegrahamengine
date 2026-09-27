@@ -11,7 +11,7 @@ import sqlite3
 from datetime import datetime, timezone
 from typing import Optional
 
-import anthropic
+from google.genai import errors
 
 from engine import db as db_module
 from engine.build.bridge import evaluate_bridge
@@ -77,7 +77,7 @@ def build_one(conn: sqlite3.Connection, signal_id: str, model: str) -> BuildOutc
             suggested_falsifier=triage_row["suggested_falsifier"] if triage_row else "",
             model=model,
         )
-    except anthropic.APIError as e:
+    except errors.APIError as e:
         logger.warning(
             "LLM call failed for signal %s (%r): %s - leaving as %r for a future run",
             signal_id, signal.title, e, row["status"],

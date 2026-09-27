@@ -42,20 +42,28 @@ engine run
 
 This works out of the box against the real sources seeded in
 `sources.yaml` — no API keys required. `engine run` runs SCAN, then TRIAGE
-(which skips itself cleanly if `ANTHROPIC_API_KEY` isn't set), then prints
+(which skips itself cleanly if `GEMINI_API_KEY` isn't set), then prints
 a punch list of anything waiting on BUILD/APPROVE/PUBLISH — those stages
 act on one signal/draft at a time by explicit ID (see below), so `run`
 never auto-drafts or auto-publishes on your behalf.
 
-### About `.env` / `ANTHROPIC_API_KEY`
+### About `.env` / `GEMINI_API_KEY`
 
-SCAN needs nothing. TRIAGE, BUILD, and PUBLISH all call the Anthropic API
-and need `ANTHROPIC_API_KEY` — when it's absent, each command prints what's
-waiting and returns cleanly instead of erroring; nothing is skipped
-silently. You don't need a `.env` file at all to run `engine scan`.
+SCAN needs nothing. TRIAGE, BUILD, and PUBLISH all call the **Gemini API**
+(chosen specifically because it has a free tier — no credit card, no paid
+plan required) and need `GEMINI_API_KEY` — when it's absent, each command
+prints what's waiting and returns cleanly instead of erroring; nothing is
+skipped silently. You don't need a `.env` file at all to run `engine scan`.
 
-The model is `claude-opus-5` by default; override with `ANTHROPIC_MODEL` in
-`.env` if you want a different one.
+Get a free key at <https://aistudio.google.com/apikey> and put it in `.env`:
+
+```
+GEMINI_API_KEY=your-key-here
+```
+
+The model is `gemini-2.5-flash` by default (fast, and covered by the free
+tier's generous daily quota); override with `GEMINI_MODEL` in `.env` if you
+want a different one.
 
 ## Data flow
 
@@ -91,7 +99,7 @@ SQLite app; swap in a real migration tool only if the schema outgrows this.
 engine scan                  # fetch all sources in sources.yaml, store new signals
 engine scan --sources other.yaml   # use a different source config
 
-engine triage                # gate every 'ingested' signal; needs ANTHROPIC_API_KEY
+engine triage                # gate every 'ingested' signal; needs GEMINI_API_KEY
 engine build <signal_id>     # draft a Bridge for one 'passed' (or already 'drafted') signal
 engine approve <draft_id>    # human sign-off: draft -> approved, clears it for publish
 engine publish <draft_id>    # assemble one 'approved' draft into carousel + caption
@@ -157,7 +165,7 @@ Every `ingested` signal goes through two layers, in order:
    `failing_gate = "rules_prefilter"` and the LLM is never called for it —
    this is the whole point of having a cheap layer first.
 2. **LLM gate scoring** (`engine/triage/llm.py` + `engine/triage/gates.py`)
-   — anything that survives the prefilter gets scored by the Anthropic API
+   — anything that survives the prefilter gets scored by the Gemini API
    against the three gates from the spec (mechanism, non-consensus,
    reusable lens), via a JSON-schema-constrained response. The gate
    evaluation logic itself (`engine/triage/gates.py`) is pure — no I/O —
@@ -226,7 +234,7 @@ use simple `{{field}}` placeholders (e.g. `{{sector}}`, `{{title}}`,
 | Phase | Stage | Status |
 |---|---|---|
 | 1 | SCAN | Done — adapters (rss/json_api/scraper), dedup, resilient concurrent fetch, `engine scan` |
-| 2 | TRIAGE | Done — rules prefilter, pure gate-evaluation functions, LLM scoring via `claude-opus-5`, `engine triage` |
+| 2 | TRIAGE | Done — rules prefilter, pure gate-evaluation functions, LLM scoring via `gemini-2.5-flash`, `engine triage` |
 | 3 | BUILD | Done — Bridge draft generation, falsifier validation at the DB layer, revision history, `engine build <signal_id>` |
 | 4 | PUBLISH | Done — human-approval gate (`engine approve`) + carousel/caption assembly, `engine publish <draft_id>` |
 | 5 | Web dashboard | Not started — FastAPI + single page over the same CLI logic |
@@ -267,15 +275,15 @@ engine/
   triage/
     rules.py         cheap heuristic prefilter (no network)
     gates.py         pure gate-evaluation logic + defensive JSON parsing
-    llm.py           Anthropic API call + prompts/triage.md rendering
+    llm.py           Gemini API call + prompts/triage.md rendering
     runner.py        orchestrates rules -> LLM -> persist, per signal
   build/
     bridge.py        pure Bridge-response parsing + defensive JSON parsing
-    llm.py            Anthropic API call + prompts/bridge.md rendering
+    llm.py            Gemini API call + prompts/bridge.md rendering
     runner.py         orchestrates LLM -> persist, per signal
   publish/
     assembly.py       pure publish-response parsing + defensive JSON parsing
-    llm.py             Anthropic API call + prompts/publish.md rendering
+    llm.py             Gemini API call + prompts/publish.md rendering
     runner.py          orchestrates LLM -> persist, per draft
 prompts/             editable *.md LLM prompt templates
 sources.yaml         source registry (no source URLs in code)

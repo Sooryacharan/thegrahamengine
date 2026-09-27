@@ -1,5 +1,5 @@
-"""Anthropic API call for the TRIAGE gate-scoring pass. Renders
-prompts/triage.md, calls the Messages API with a JSON-schema output
+"""Gemini API call for the TRIAGE gate-scoring pass. Renders
+prompts/triage.md, calls the Gemini API with a JSON-schema output
 constraint for strict JSON, and hands the raw response text to
 engine.triage.gates for defensive parsing — this module never interprets
 the content itself, only fetches it.
@@ -8,14 +8,15 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import anthropic
+from google import genai
+from google.genai import types
 
-from engine.config import anthropic_api_key
+from engine.config import gemini_api_key
 from engine.models import Signal
 
 PROMPT_PATH = Path(__file__).parent.parent.parent / "prompts" / "triage.md"
 
-MAX_TOKENS = 2048
+MAX_OUTPUT_TOKENS = 2048
 
 TRIAGE_JSON_SCHEMA = {
     "type": "object",
@@ -53,27 +54,24 @@ def render_prompt(signal: Signal) -> str:
 
 
 def score_signal(signal: Signal, model: str) -> str:
-    """Calls the Anthropic API and returns the raw response text.
+    """Calls the Gemini API and returns the raw response text.
 
-    Raises anthropic.APIError (or a subclass) on transport/API failure —
-    callers decide how to handle that. Whether the *content* is valid JSON
-    is never checked here; that defensive parsing lives in gates.py so it
-    can be unit-tested without a network call.
+    Raises google.genai.errors.APIError (or a subclass) on transport/API
+    failure — callers decide how to handle that. Whether the *content* is
+    valid JSON is never checked here; that defensive parsing lives in
+    gates.py so it can be unit-tested without a network call.
     """
-    client = anthropic.Anthropic(api_key=anthropic_api_key())
+    client = genai.Client(api_key=gemini_api_key())
     prompt = render_prompt(signal)
 
-    response = client.messages.create(
+    response = client.models.generate_content(
         model=model,
-        max_tokens=MAX_TOKENS,
-        output_config={"format": {"type": "json_schema", "schema": TRIAGE_JSON_SCHEMA}},
-        messages=[{"role": "user", "content": prompt}],
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            response_mime_type="application/json",
+            response_json_schema=TRIAGE_JSON_SCHEMA,
+            max_output_tokens=MAX_OUTPUT_TOKENS,
+        ),
     )
 
-    if response.stop_reason == "refusal":
-        return "{}"  # deliberately malformed -> gates.py records it as discarded
-
-    for block in response.content:
-        if block.type == "text":
-            return block.text
-    return "{}"
+    return response.text or "{}"  # blocked/empty response -> gates.py records it as discarded

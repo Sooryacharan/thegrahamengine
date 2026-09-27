@@ -10,7 +10,7 @@ import logging
 import sqlite3
 from datetime import datetime, timezone
 
-import anthropic
+from google.genai import errors
 
 from engine import db as db_module
 from engine.models import STATUS_DISCARDED, STATUS_PASSED, Signal, TriageResult
@@ -62,7 +62,7 @@ def triage_one(conn: sqlite3.Connection, signal_row: sqlite3.Row, model: str) ->
 
     try:
         raw_response = score_signal(_row_to_signal(signal_row), model=model)
-    except anthropic.APIError as e:
+    except errors.APIError as e:
         logger.warning("LLM call failed for signal %s (%r): %s - leaving as ingested for a future run", signal_id, title, e)
         return TriageOutcome(signal_id, title, "skipped", str(e))
 

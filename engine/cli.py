@@ -45,17 +45,17 @@ def cmd_scan(args: argparse.Namespace) -> int:
 
 
 def cmd_triage(args: argparse.Namespace) -> int:
-    if not config.anthropic_api_key():
+    if not config.gemini_api_key():
         with db_module.connect(config.db_path()) as conn:
             pending = len(db_module.list_signals(conn, status="ingested"))
-        print("ANTHROPIC_API_KEY not set - skipping LLM triage stage.")
-        print(f"{pending} signal(s) remain in 'ingested' status. Set ANTHROPIC_API_KEY and re-run `engine triage` to process them.")
+        print("GEMINI_API_KEY not set - skipping LLM triage stage.")
+        print(f"{pending} signal(s) remain in 'ingested' status. Set GEMINI_API_KEY and re-run `engine triage` to process them.")
         return 0
 
     from engine.triage.runner import run_triage
 
     with db_module.connect(config.db_path()) as conn:
-        outcomes = run_triage(conn, model=config.anthropic_model())
+        outcomes = run_triage(conn, model=config.gemini_model())
 
     if not outcomes:
         print("No signals in 'ingested' status to triage. Run `engine scan` first.")
@@ -76,14 +76,14 @@ def cmd_triage(args: argparse.Namespace) -> int:
 
 
 def cmd_build(args: argparse.Namespace) -> int:
-    if not config.anthropic_api_key():
-        print("ANTHROPIC_API_KEY not set - cannot run BUILD (needs the Anthropic API).")
+    if not config.gemini_api_key():
+        print("GEMINI_API_KEY not set - cannot run BUILD (needs the Gemini API).")
         return 0
 
     from engine.build.runner import build_one
 
     with db_module.connect(config.db_path()) as conn:
-        outcome = build_one(conn, args.signal_id, model=config.anthropic_model())
+        outcome = build_one(conn, args.signal_id, model=config.gemini_model())
 
     if outcome.outcome == "drafted":
         print(f"Draft #{outcome.draft_id} created for signal {args.signal_id!r}. Review it, then `engine approve {outcome.draft_id}`.")
@@ -110,14 +110,14 @@ def cmd_approve(args: argparse.Namespace) -> int:
 
 
 def cmd_publish(args: argparse.Namespace) -> int:
-    if not config.anthropic_api_key():
-        print("ANTHROPIC_API_KEY not set - cannot run PUBLISH (needs the Anthropic API).")
+    if not config.gemini_api_key():
+        print("GEMINI_API_KEY not set - cannot run PUBLISH (needs the Gemini API).")
         return 0
 
     from engine.publish.runner import publish_one
 
     with db_module.connect(config.db_path()) as conn:
-        outcome = publish_one(conn, args.draft_id, model=config.anthropic_model())
+        outcome = publish_one(conn, args.draft_id, model=config.gemini_model())
 
     if outcome.outcome == "published":
         print(f"Publication #{outcome.publication_id} assembled for draft #{args.draft_id}. Ready to paste.")

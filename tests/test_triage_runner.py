@@ -1,16 +1,11 @@
 import json
 
-import anthropic
 import pytest
+from google.genai import errors
 
 from engine import db as db_module
 from engine.models import STATUS_DISCARDED, STATUS_INGESTED, STATUS_PASSED, Signal
 from engine.triage import runner as runner_module
-
-
-class FakeAPIError(anthropic.APIError):
-    def __init__(self, message):
-        Exception.__init__(self, message)
 
 
 @pytest.fixture
@@ -101,7 +96,7 @@ def test_api_error_leaves_signal_ingested_and_does_not_crash_run(conn, monkeypat
 
     def flaky(signal, model):
         if signal.id == "s5":
-            raise FakeAPIError("simulated network failure")
+            raise errors.APIError(500, {"error": {"message": "simulated network failure"}})
         return llm_json(True, True, True)
 
     monkeypatch.setattr(runner_module, "score_signal", flaky)

@@ -10,7 +10,7 @@ import sqlite3
 from datetime import datetime, timezone
 from typing import Optional
 
-import anthropic
+from google.genai import errors
 
 from engine import db as db_module
 from engine.models import DRAFT_STATUS_APPROVED, DRAFT_STATUS_PUBLISHED, STATUS_PUBLISHED, Publication
@@ -56,7 +56,7 @@ def publish_one(conn: sqlite3.Connection, draft_id: int, model: str) -> PublishO
             assumption=draft_row["assumption"], consequence=draft_row["consequence"],
             falsifier=draft_row["falsifier"], model=model,
         )
-    except anthropic.APIError as e:
+    except errors.APIError as e:
         logger.warning(
             "LLM call failed for draft %s: %s - leaving as %r for a future run",
             draft_id, e, DRAFT_STATUS_APPROVED,

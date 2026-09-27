@@ -42,13 +42,13 @@ def load_env(dotenv_path: Optional[str] = None) -> None:
     load_dotenv(dotenv_path or (REPO_ROOT / ".env"))
 
 
-def anthropic_api_key() -> Optional[str]:
-    key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
+def gemini_api_key() -> Optional[str]:
+    key = os.environ.get("GEMINI_API_KEY", "").strip()
     return key or None
 
 
-def anthropic_model() -> str:
-    return os.environ.get("ANTHROPIC_MODEL", "claude-opus-5")
+def gemini_model() -> str:
+    return os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
 
 
 def db_path() -> str:

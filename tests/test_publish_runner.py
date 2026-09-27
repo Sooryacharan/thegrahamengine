@@ -1,7 +1,7 @@
 import json
 
-import anthropic
 import pytest
+from google.genai import errors
 
 from engine import db as db_module
 from engine.models import (
@@ -13,11 +13,6 @@ from engine.models import (
     Signal,
 )
 from engine.publish import runner as runner_module
-
-
-class FakeAPIError(anthropic.APIError):
-    def __init__(self, message):
-        Exception.__init__(self, message)
 
 
 @pytest.fixture
@@ -100,7 +95,7 @@ def test_api_error_leaves_draft_approved_and_does_not_crash(conn, monkeypatch):
     draft_id = make_approved_draft(conn, "s4")
 
     def flaky(*a, **kw):
-        raise FakeAPIError("simulated network failure")
+        raise errors.APIError(500, {"error": {"message": "simulated network failure"}})
 
     monkeypatch.setattr(runner_module, "generate_publication", flaky)
 
