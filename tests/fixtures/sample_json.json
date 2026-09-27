@@ -1,0 +1,16 @@
+{
+  "items": [
+    {
+      "title": "Sovereign wealth fund rotates $4B out of long-duration bonds",
+      "url": "https://example.com/articles/swf-rotation",
+      "summary": "Filings show a shift toward short-duration credit.",
+      "published_at": "2026-08-03T09:00:00Z"
+    },
+    {
+      "title": "Copper inventories at LME hit five-year low",
+      "url": "https://example.com/articles/copper-inventories",
+      "summary": "Warehouse stocks have fallen for eleven straight weeks.",
+      "published_at": "2026-08-03T08:30:00Z"
+    }
+  ]
+}

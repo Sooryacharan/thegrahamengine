@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Sample Feed</title>
+    <link>https://example.com</link>
+    <description>Fixture feed for adapter tests</description>
+    <item>
+      <title>OPEC+ signals surprise supply cut starting Q3</title>
+      <link>https://example.com/articles/opec-supply-cut</link>
+      <description>OPEC+ ministers agreed to reduce output quotas.</description>
+      <pubDate>Mon, 03 Aug 2026 09:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Central bank holds rates, flags balance sheet runoff</title>
+      <link>https://example.com/articles/central-bank-holds</link>
+      <description>The committee voted to hold rates steady.</description>
+      <pubDate>Mon, 03 Aug 2026 08:00:00 GMT</pubDate>
+    </item>
+  </channel>
+</rss>

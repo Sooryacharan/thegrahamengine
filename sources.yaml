@@ -1,0 +1,111 @@
+# Source registry for the SCAN stage. Nothing about sources is hardcoded in
+# engine/ - this file is the only place that knows what to poll.
+#
+# Every source needs: name, type, url, sector, poll_interval (seconds).
+#   type is one of: rss | json_api | scraper
+#   sector is one of: geopolitics | commodities | long_duration_compounders |
+#                      catastrophe_driven | money_flows
+#
+# Any other key becomes adapter-specific config (source.extra):
+#   json_api  -> items_path (dot-path to the list), field_map (dot-paths for
+#                title/url/summary/published_at, resolved per item)
+#   scraper   -> item_selector, title_selector, url_selector, summary_selector
+#                (CSS selectors)
+#
+# These are real, live, no-API-key-required feeds so `engine scan` produces
+# actual signals on first run - not just a config exercise. Swap them for
+# your own sources whenever; the adapters don't care which URLs you point
+# them at, only which `type` you declare.
+
+sources:
+
+  # --- geopolitics ---------------------------------------------------------
+  - name: "Al Jazeera - All News"
+    type: rss
+    url: "https://www.aljazeera.com/xml/rss/all.xml"
+    sector: geopolitics
+    poll_interval: 900
+
+  - name: "BBC News - World"
+    type: rss
+    url: "https://feeds.bbci.co.uk/news/world/rss.xml"
+    sector: geopolitics
+    poll_interval: 900
+
+  # --- commodities -----------------------------------------------------------
+  - name: "OilPrice.com - Latest Energy News"
+    type: rss
+    url: "https://oilprice.com/rss/main"
+    sector: commodities
+    poll_interval: 900
+
+  - name: "Investing.com - Metals"
+    type: rss
+    url: "https://www.investing.com/rss/commodities_Metals.rss"
+    sector: commodities
+    poll_interval: 900
+
+  # --- long_duration_compounders ----------------------------------------
+  - name: "CNBC - Markets"
+    type: rss
+    url: "https://www.cnbc.com/id/10000664/device/rss/rss.html"
+    sector: long_duration_compounders
+    poll_interval: 1800
+
+  - name: "Seeking Alpha - Market Currents"
+    type: rss
+    url: "https://seekingalpha.com/feed.xml"
+    sector: long_duration_compounders
+    poll_interval: 1800
+
+  # --- catastrophe_driven -------------------------------------------------
+  # Real government/NGO disaster-alert feeds - no synthetic placeholder needed,
+  # these are exactly the kind of primary sources this sector should use.
+  - name: "USGS - Significant Earthquakes (past week)"
+    type: json_api
+    url: "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_week.geojson"
+    sector: catastrophe_driven
+    poll_interval: 900
+    items_path: features
+    field_map:
+      title: properties.place
+      url: properties.url
+      summary: properties.status
+      published_at: properties.time
+
+  - name: "GDACS - Global Disaster Alerts"
+    type: rss
+    url: "https://www.gdacs.org/xml/rss.xml"
+    sector: catastrophe_driven
+    poll_interval: 900
+
+  # --- money_flows (cross-cutting: fund flows, positioning, FII/DII) -----
+  - name: "Federal Reserve - Press Releases"
+    type: rss
+    url: "https://www.federalreserve.gov/feeds/press_all.xml"
+    sector: money_flows
+    poll_interval: 1800
+
+  - name: "HN Algolia - 'markets' search"
+    type: json_api
+    url: "https://hn.algolia.com/api/v1/search?tags=story&query=markets&hitsPerPage=20"
+    sector: money_flows
+    poll_interval: 1800
+    items_path: hits
+    field_map:
+      title: title
+      url: url
+      published_at: created_at
+
+  # Demonstrates the scraper (HTML fallback) adapter type end-to-end against
+  # a page with a genuinely stable DOM. Topically generic - replace with a
+  # real fund-flow / positioning page once you have one; the point here is
+  # to prove the adapter and its selector config work.
+  - name: "Scraper demo - Hacker News front page"
+    type: scraper
+    url: "https://news.ycombinator.com/"
+    sector: money_flows
+    poll_interval: 1800
+    item_selector: "tr.athing"
+    title_selector: "span.titleline > a"
+    url_selector: "span.titleline > a"

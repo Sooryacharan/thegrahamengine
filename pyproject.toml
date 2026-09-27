@@ -1,0 +1,33 @@
+[project]
+name = "graham-engine"
+version = "0.1.0"
+description = "The Graham Engine — market intelligence & content pipeline for forward-looking, falsifiable market theses"
+requires-python = ">=3.11"
+dependencies = [
+    "httpx>=0.27",
+    "feedparser>=6.0",
+    "beautifulsoup4>=4.12",
+    "PyYAML>=6.0",
+    "python-dotenv>=1.0",
+    "anthropic>=0.68",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+]
+
+[project.scripts]
+engine = "engine.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["engine*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
