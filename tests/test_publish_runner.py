@@ -1,5 +1,6 @@
 import json
 
+import httpx
 import pytest
 from google.genai import errors
 
@@ -98,6 +99,23 @@ def test_api_error_leaves_draft_approved_and_does_not_crash(conn, monkeypatch):
         raise errors.APIError(500, {"error": {"message": "simulated network failure"}})
 
     monkeypatch.setattr(runner_module, "generate_publication", flaky)
+
+    outcome = runner_module.publish_one(conn, draft_id, model="claude-opus-5")
+    assert outcome.outcome == "skipped"
+
+    draft_row = db_module.get_draft(conn, draft_id)
+    assert draft_row["status"] == DRAFT_STATUS_APPROVED
+
+
+def test_network_error_leaves_draft_approved_and_does_not_crash(conn, monkeypatch):
+    # A connection-level failure surfaces as a raw httpx error, not
+    # google.genai.errors.APIError — this must be caught too.
+    draft_id = make_approved_draft(conn, "s5")
+
+    def flaky_network(*a, **kw):
+        raise httpx.ConnectError("simulated unreachable network")
+
+    monkeypatch.setattr(runner_module, "generate_publication", flaky_network)
 
     outcome = runner_module.publish_one(conn, draft_id, model="claude-opus-5")
     assert outcome.outcome == "skipped"

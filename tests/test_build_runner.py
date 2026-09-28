@@ -1,5 +1,6 @@
 import json
 
+import httpx
 import pytest
 from google.genai import errors
 
@@ -122,4 +123,22 @@ def test_api_error_leaves_signal_passed_and_does_not_crash(conn, monkeypatch):
     assert outcome.outcome == "skipped"
 
     row = db_module.get_signal(conn, "s6")
+    assert row["status"] == STATUS_PASSED
+
+
+def test_network_error_leaves_signal_passed_and_does_not_crash(conn, monkeypatch):
+    # A connection-level failure surfaces as a raw httpx error, not
+    # google.genai.errors.APIError — this must be caught too.
+    db_module.insert_signal_if_new(conn, make_signal("s7", status=STATUS_INGESTED))
+    db_module.update_signal_status(conn, "s7", STATUS_PASSED, "2026-08-04T00:00:00Z")
+
+    def flaky(*a, **kw):
+        raise httpx.ConnectError("simulated unreachable network")
+
+    monkeypatch.setattr(runner_module, "generate_draft", flaky)
+
+    outcome = runner_module.build_one(conn, "s7", model="claude-opus-5")
+    assert outcome.outcome == "skipped"
+
+    row = db_module.get_signal(conn, "s7")
     assert row["status"] == STATUS_PASSED

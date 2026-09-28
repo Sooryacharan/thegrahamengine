@@ -61,9 +61,12 @@ Get a free key at <https://aistudio.google.com/apikey> and put it in `.env`:
 GEMINI_API_KEY=your-key-here
 ```
 
-The model is `gemini-2.5-flash` by default (fast, and covered by the free
-tier's generous daily quota); override with `GEMINI_MODEL` in `.env` if you
-want a different one.
+The model is `gemini-flash-lite-latest` by default — of the Gemini family,
+the "lite" tier carries by far the most generous free daily quota (the
+flagship `flash` models are much stingier for free-tier accounts, as low as
+20 requests/day). Override with `GEMINI_MODEL` in `.env` if you want a
+different one, but expect to hit rate limits fast on anything heavier
+while on the free tier.
 
 ## Data flow
 
@@ -234,7 +237,7 @@ use simple `{{field}}` placeholders (e.g. `{{sector}}`, `{{title}}`,
 | Phase | Stage | Status |
 |---|---|---|
 | 1 | SCAN | Done — adapters (rss/json_api/scraper), dedup, resilient concurrent fetch, `engine scan` |
-| 2 | TRIAGE | Done — rules prefilter, pure gate-evaluation functions, LLM scoring via `gemini-2.5-flash`, `engine triage` |
+| 2 | TRIAGE | Done — rules prefilter, pure gate-evaluation functions, LLM scoring via `gemini-flash-lite-latest`, `engine triage` |
 | 3 | BUILD | Done — Bridge draft generation, falsifier validation at the DB layer, revision history, `engine build <signal_id>` |
 | 4 | PUBLISH | Done — human-approval gate (`engine approve`) + carousel/caption assembly, `engine publish <draft_id>` |
 | 5 | Web dashboard | Not started — FastAPI + single page over the same CLI logic |

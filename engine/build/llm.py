@@ -1,8 +1,7 @@
 """Gemini API call for the BUILD Bridge-draft generation pass. Renders
-prompts/bridge.md, calls the Gemini API with a JSON-schema output
-constraint for strict JSON, and hands the raw response text to
-engine.build.bridge for defensive parsing — this module never interprets
-the content itself, only fetches it.
+prompts/bridge.md, calls the Gemini API in JSON mode, and hands the raw
+response text to engine.build.bridge for defensive parsing — this module
+never interprets the content itself, only fetches it.
 """
 from __future__ import annotations
 
@@ -17,19 +16,6 @@ from engine.models import Signal
 PROMPT_PATH = Path(__file__).parent.parent.parent / "prompts" / "bridge.md"
 
 MAX_OUTPUT_TOKENS = 2048
-
-BRIDGE_JSON_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "observable": {"type": "string"},
-        "mechanism": {"type": "string"},
-        "assumption": {"type": "string"},
-        "consequence": {"type": "string"},
-        "falsifier": {"type": "string"},
-    },
-    "required": ["observable", "mechanism", "assumption", "consequence", "falsifier"],
-    "additionalProperties": False,
-}
 
 
 def load_prompt_template() -> str:
@@ -75,7 +61,6 @@ def generate_draft(
         contents=prompt,
         config=types.GenerateContentConfig(
             response_mime_type="application/json",
-            response_json_schema=BRIDGE_JSON_SCHEMA,
             max_output_tokens=MAX_OUTPUT_TOKENS,
         ),
     )

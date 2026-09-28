@@ -1,8 +1,7 @@
 """Gemini API call for the PUBLISH assembly pass. Renders
-prompts/publish.md, calls the Gemini API with a JSON-schema output
-constraint for strict JSON, and hands the raw response text to
-engine.publish.assembly for defensive parsing — this module never
-interprets the content itself, only fetches it.
+prompts/publish.md, calls the Gemini API in JSON mode, and hands the raw
+response text to engine.publish.assembly for defensive parsing — this
+module never interprets the content itself, only fetches it.
 """
 from __future__ import annotations
 
@@ -16,20 +15,6 @@ from engine.config import gemini_api_key
 PROMPT_PATH = Path(__file__).parent.parent.parent / "prompts" / "publish.md"
 
 MAX_OUTPUT_TOKENS = 3072
-
-PUBLISH_JSON_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "hook": {"type": "string"},
-        "context": {"type": "string"},
-        "falsifier_line": {"type": "string"},
-        "payoff_line": {"type": "string"},
-        "carousel_slides": {"type": "array", "items": {"type": "string"}, "minItems": 3},
-        "caption": {"type": "string"},
-    },
-    "required": ["hook", "context", "falsifier_line", "payoff_line", "carousel_slides", "caption"],
-    "additionalProperties": False,
-}
 
 
 def load_prompt_template() -> str:
@@ -74,7 +59,6 @@ def generate_publication(
         contents=prompt,
         config=types.GenerateContentConfig(
             response_mime_type="application/json",
-            response_json_schema=PUBLISH_JSON_SCHEMA,
             max_output_tokens=MAX_OUTPUT_TOKENS,
         ),
     )

@@ -11,11 +11,10 @@ import sqlite3
 from datetime import datetime, timezone
 from typing import Optional
 
-from google.genai import errors
-
 from engine import db as db_module
 from engine.build.bridge import evaluate_bridge
 from engine.build.llm import generate_draft
+from engine.llm_errors import TRANSIENT_LLM_ERRORS
 from engine.models import STATUS_DRAFTED, STATUS_PASSED, Draft, Signal
 
 logger = logging.getLogger("engine.build")
@@ -77,7 +76,7 @@ def build_one(conn: sqlite3.Connection, signal_id: str, model: str) -> BuildOutc
             suggested_falsifier=triage_row["suggested_falsifier"] if triage_row else "",
             model=model,
         )
-    except errors.APIError as e:
+    except TRANSIENT_LLM_ERRORS as e:
         logger.warning(
             "LLM call failed for signal %s (%r): %s - leaving as %r for a future run",
             signal_id, signal.title, e, row["status"],

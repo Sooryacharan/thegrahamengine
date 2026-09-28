@@ -1,8 +1,7 @@
 """Gemini API call for the TRIAGE gate-scoring pass. Renders
-prompts/triage.md, calls the Gemini API with a JSON-schema output
-constraint for strict JSON, and hands the raw response text to
-engine.triage.gates for defensive parsing — this module never interprets
-the content itself, only fetches it.
+prompts/triage.md, calls the Gemini API in JSON mode, and hands the raw
+response text to engine.triage.gates for defensive parsing — this module
+never interprets the content itself, only fetches it.
 """
 from __future__ import annotations
 
@@ -17,24 +16,6 @@ from engine.models import Signal
 PROMPT_PATH = Path(__file__).parent.parent.parent / "prompts" / "triage.md"
 
 MAX_OUTPUT_TOKENS = 2048
-
-TRIAGE_JSON_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "gate1_pass": {"type": "boolean"},
-        "gate2_pass": {"type": "boolean"},
-        "gate3_pass": {"type": "boolean"},
-        "reasoning": {"type": "string"},
-        "second_order_read": {"type": "string"},
-        "suggested_falsifier": {"type": "string"},
-        "confidence": {"type": "number"},
-    },
-    "required": [
-        "gate1_pass", "gate2_pass", "gate3_pass",
-        "reasoning", "second_order_read", "suggested_falsifier", "confidence",
-    ],
-    "additionalProperties": False,
-}
 
 
 def load_prompt_template() -> str:
@@ -69,7 +50,6 @@ def score_signal(signal: Signal, model: str) -> str:
         contents=prompt,
         config=types.GenerateContentConfig(
             response_mime_type="application/json",
-            response_json_schema=TRIAGE_JSON_SCHEMA,
             max_output_tokens=MAX_OUTPUT_TOKENS,
         ),
     )

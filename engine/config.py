@@ -48,7 +48,7 @@ def gemini_api_key() -> Optional[str]:
 
 
 def gemini_model() -> str:
-    return os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+    return os.environ.get("GEMINI_MODEL", "gemini-flash-lite-latest")
 
 
 def db_path() -> str:

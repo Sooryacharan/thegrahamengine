@@ -10,9 +10,8 @@ import logging
 import sqlite3
 from datetime import datetime, timezone
 
-from google.genai import errors
-
 from engine import db as db_module
+from engine.llm_errors import TRANSIENT_LLM_ERRORS
 from engine.models import STATUS_DISCARDED, STATUS_PASSED, Signal, TriageResult
 from engine.triage.gates import evaluate_gates
 from engine.triage.llm import score_signal
@@ -62,7 +61,7 @@ def triage_one(conn: sqlite3.Connection, signal_row: sqlite3.Row, model: str) ->
 
     try:
         raw_response = score_signal(_row_to_signal(signal_row), model=model)
-    except errors.APIError as e:
+    except TRANSIENT_LLM_ERRORS as e:
         logger.warning("LLM call failed for signal %s (%r): %s - leaving as ingested for a future run", signal_id, title, e)
         return TriageOutcome(signal_id, title, "skipped", str(e))
 
